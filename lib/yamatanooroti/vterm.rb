@@ -33,12 +33,8 @@ class Yamatanooroti::VTermTestCase < Test::Unit::TestCase
     loop do
       sleep @wait
       chunk = @pty_output.read_nonblock(1024)
-      puts
-      puts ?* * 100
-      pp chunk
       @vterm.write(chunk)
       chunk = @vterm.read
-      pp chunk
       @pty_input.write(chunk)
     rescue Errno::EAGAIN, Errno::EWOULDBLOCK
       break
