@@ -2,7 +2,7 @@ require 'test-unit'
 require 'vterm'
 require 'pty'
 
-class Yamatanooroti::VTermTestCase < Test::Unit::TestCase
+module Yamatanooroti::VTermTestCaseModule
   def setup(height, width, command, wait: 0.1)
     @wait = wait
 
@@ -58,4 +58,8 @@ class Yamatanooroti::VTermTestCase < Test::Unit::TestCase
     end
     assert_equal(expected_lines, actual_lines)
   end
+end
+
+class Yamatanooroti::VTermTestCase < Test::Unit::TestCase
+  include Yamatanooroti::VTermTestCaseModule
 end

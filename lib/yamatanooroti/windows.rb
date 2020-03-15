@@ -209,7 +209,7 @@ module Yamatanooroti::WindowsDefinition
   SM_CYMIN = 29
 end
 
-class Yamatanooroti::WindowsTestCase < Test::Unit::TestCase
+module Yamatanooroti::WindowsTestCaseModule
   DL = Yamatanooroti::WindowsDefinition
 
   private def setup_console(height, width)
@@ -430,4 +430,8 @@ class Yamatanooroti::WindowsTestCase < Test::Unit::TestCase
 
   def teardown
   end
+end
+
+class Yamatanooroti::WindowsTestCase < Test::Unit::TestCase
+  include Yamatanooroti::WindowsTestCaseModule
 end
