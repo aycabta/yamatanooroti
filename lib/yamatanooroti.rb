@@ -11,7 +11,7 @@ class Yamatanooroti
       end
     when :WindowsTestCase
       unless RbConfig::CONFIG['host_os'].match?(/mswin|msys|mingw|cygwin|bccwin|wince|emc/)
-        raise LoadError.new('iYou need Windows environment for Yamatanooroti::WindowsTestCase')
+        raise LoadError.new('You need Windows environment for Yamatanooroti::WindowsTestCase')
       end
       require 'yamatanooroti/windows'
       Yamatanooroti::WindowsTestCase
