@@ -52,7 +52,7 @@ class Yamatanooroti::VTermTestCase < Test::Unit::TestCase
       actual_lines << ''
       cols.times do |c|
         cell = @screen.cell_at(r, c)
-        actual_lines.last << cell.char
+        actual_lines.last << cell.char if cell.char
       end
     end
     assert_equal(expected_lines, actual_lines)
