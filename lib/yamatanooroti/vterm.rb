@@ -54,6 +54,7 @@ class Yamatanooroti::VTermTestCase < Test::Unit::TestCase
         cell = @screen.cell_at(r, c)
         actual_lines.last << cell.char if cell.char
       end
+      actual_lines.last.gsub!(/ *$/, '')
     end
     assert_equal(expected_lines, actual_lines)
   end
