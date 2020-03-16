@@ -417,7 +417,7 @@ module Yamatanooroti::WindowsTestCaseModule
     assert_equal(expected_lines, @result)
   end
 
-  def setup(height, width, command, wait: 1)
+  def start_terminal(height, width, command, wait: 1)
     @height = height
     @width = width
     @wait = wait

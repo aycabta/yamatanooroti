@@ -3,7 +3,7 @@ require 'vterm'
 require 'pty'
 
 module Yamatanooroti::VTermTestCaseModule
-  def setup(height, width, command, wait: 0.1)
+  def start_terminal(height, width, command, wait: 0.1)
     @wait = wait
 
     @pty_output, @pty_input, @pid = PTY.spawn(*command)

@@ -2,7 +2,7 @@ require 'yamatanooroti'
 
 class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
   def setup
-    super(5, 30, ['irb', '-f', '--multiline'])
+    start_terminal(5, 30, ['irb', '-f', '--multiline'])
     sleep 0.5
   end
 
