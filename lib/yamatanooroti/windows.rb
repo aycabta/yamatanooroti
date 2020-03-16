@@ -171,8 +171,6 @@ module Yamatanooroti::WindowsDefinition
 
   # BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
   extern 'BOOL CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);', :stdcall
-  # void GetStartupInfoW(LPSTARTUPINFOW lpStartupInfo);
-  extern 'void GetStartupInfoW(LPSTARTUPINFOW);', :stdcall
   # HANDLE CreateToolhelp32Snapshot(DWORD dwFlags, DWORD th32ProcessID);
   extern 'HANDLE CreateToolhelp32Snapshot(DWORD, DWORD);', :stdcall
   # BOOL Process32First(HANDLE hSnapshot, LPPROCESSENTRY32W lppe);
@@ -290,8 +288,7 @@ module Yamatanooroti::WindowsTestCaseModule
     @pi = DL::PROCESS_INFORMATION.malloc
     (@pi.to_ptr + 0)[0, DL::PROCESS_INFORMATION.size] = "\x00" * DL::PROCESS_INFORMATION.size
     @startup_info_ex = DL::STARTUPINFOW.malloc
-    #(@startup_info_ex.to_ptr + 0)[0, DL::STARTUPINFOW.size] = "\x00" * DL::STARTUPINFOW.size
-    DL.GetStartupInfoW(@startup_info_ex)
+    (@startup_info_ex.to_ptr + 0)[0, DL::STARTUPINFOW.size] = "\x00" * DL::STARTUPINFOW.size
     result = DL.CreateProcessW(
       Fiddle::NULL, converted_command,
       Fiddle::NULL, Fiddle::NULL, 0, 0, Fiddle::NULL, Fiddle::NULL,
