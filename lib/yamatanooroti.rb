@@ -50,19 +50,7 @@ class Yamatanooroti
 end
 
 class Yamatanooroti::TestCase < Test::Unit::TestCase
-  def self.define_env_dependent_test_suite(klass, parent_test_case)
-    test_klass = Class.new(klass)
-    klass.const_set(:TestVTerm, test_klass)
-    test_klass.include parent_test_case
-    def klass.method_added(name)
-      super
-      if ancestors[1] == Yamatanooroti::TestCase
-        c = const_get(:TestVTerm)
-        c.define_method(name, instance_method(name))
-        remove_method name
-      end
-    end
-  end
+  @@runners = []
 
   def self.inherited(klass)
     super
@@ -71,26 +59,29 @@ class Yamatanooroti::TestCase < Test::Unit::TestCase
         test_klass = Class.new(klass)
         klass.const_set(:TestVTerm, test_klass)
         test_klass.include Yamatanooroti::VTermTestCaseModule
-        def klass.method_added(name)
-          super
-          if ancestors[1] == Yamatanooroti::TestCase
-            c = const_get(:TestVTerm)
-            c.define_method(name, instance_method(name))
-            remove_method name
-          end
-        end
+        @@runners << test_klass
       end
       if Yamatanooroti.win?
         test_klass = Class.new(klass)
         klass.const_set(:TestWindows, test_klass)
         test_klass.include Yamatanooroti::WindowsTestCaseModule
-        def klass.method_added(name)
-          super
-          if ancestors[1] == Yamatanooroti::TestCase
-            c = const_get(:TestWindows)
-            c.define_method(name, instance_method(name))
-            remove_method name
+        @@runners << test_klass
+      end
+      if @@runners.empty?
+        raise LoadError.new(<<~EOM)
+          Any real(?) terminal environments not found.
+          Supporting real(?) terminals:
+          - vterm gem
+          - Windows
+        EOM
+      end
+      def klass.method_added(name)
+        super
+        if ancestors[1] == Yamatanooroti::TestCase
+          @@runners.each do |test_klass|
+            test_klass.define_method(name, instance_method(name))
           end
+          remove_method name
         end
       end
     end
