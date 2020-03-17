@@ -79,6 +79,24 @@ If you haven't installed vterm gem, this code will fail with a message <q>You ne
 
 Likewise, you can specify Windows command prompt test by `Yamatanooroti::WindowsTestCase`.
 
+## Method Reference
+
+### `start_terminal(height, width, command)`
+
+Starts terminal internally that is sized `height` and `width` with `command` to test the result. The `command` should be an array of strings with a path of command and zero or more options. This should be called in `setup` method.
+
+### `write(str)`
+
+Writes `str` like inputting by a keyboard to the started terminal.
+
+### `close`
+
+Closes the terminal to take the internal rendering result. You must call it before call assertions.
+
+### `assert_screen(expected_lines)`
+
+Asserts the rendering result of the terminal with `expected_lines`.
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
