@@ -429,9 +429,6 @@ module Yamatanooroti::WindowsTestCaseModule
     setup_console(height, width)
     launch(command.join(' '))
   end
-
-  def teardown
-  end
 end
 
 class Yamatanooroti::WindowsTestCase < Test::Unit::TestCase

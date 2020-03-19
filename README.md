@@ -19,9 +19,6 @@ class MyTest < Yamatanooroti::TestCase
     start_terminal(5, 30, ['irb', '-f', '--multiline'])
   end
 
-  def teardown
-  end
-
   def test_example
     write(":a\n")
     close
@@ -62,9 +59,6 @@ require 'yamatanooroti'
 class MyTest < Yamatanooroti::VTermTestCase
   def setup
     start_terminal(5, 30, ['irb', '-f', '--multiline'])
-  end
-
-  def teardown
   end
 
   def test_example

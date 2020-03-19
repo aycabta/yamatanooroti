@@ -6,9 +6,6 @@ class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
     sleep 0.5
   end
 
-  def teardown
-  end
-
   def test_example
     write(":a\n")
     close
