@@ -56,7 +56,12 @@ module Yamatanooroti::VTermTestCaseModule
       end
       actual_lines.last.gsub!(/ *$/, '')
     end
-    assert_equal(expected_lines, actual_lines)
+    case expected_lines
+    when Array
+      assert_equal(expected_lines, actual_lines)
+    when String
+      assert_equal(expected_lines.gsub(/\n*\z/, ''), actual_lines.join("\n").gsub(/\n*\z/, ''))
+    end
   end
 end
 

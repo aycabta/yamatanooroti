@@ -13,5 +13,10 @@ class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
     write(":a\n")
     close
     assert_screen(['irb(main):001:0> :a', '=> :a', 'irb(main):002:0>', '', ''])
+    assert_screen(<<~EOC)
+      irb(main):001:0> :a
+      => :a
+      irb(main):002:0>
+    EOC
   end
 end

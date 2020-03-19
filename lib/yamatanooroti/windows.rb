@@ -414,7 +414,12 @@ module Yamatanooroti::WindowsTestCaseModule
   end
 
   def assert_screen(expected_lines)
-    assert_equal(expected_lines, @result)
+    case expected_lines
+    when Array
+      assert_equal(expected_lines, @result)
+    when String
+      assert_equal(expected_lines.gsub(/\n*\z/, ''), @result.join("\n").gsub(/\n*\z/, ''))
+    end
   end
 
   def start_terminal(height, width, command, wait: 1)
