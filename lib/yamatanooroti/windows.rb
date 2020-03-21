@@ -418,7 +418,7 @@ module Yamatanooroti::WindowsTestCaseModule
     when Array
       assert_equal(expected_lines, @result)
     when String
-      assert_equal(expected_lines.gsub(/\n*\z/, ''), @result.join("\n").gsub(/\n*\z/, ''))
+      assert_equal(expected_lines, @result.join("\n").sub(/\n*\z/, "\n"))
     end
   end
 

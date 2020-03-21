@@ -60,7 +60,7 @@ module Yamatanooroti::VTermTestCaseModule
     when Array
       assert_equal(expected_lines, actual_lines)
     when String
-      assert_equal(expected_lines.gsub(/\n*\z/, ''), actual_lines.join("\n").gsub(/\n*\z/, ''))
+      assert_equal(expected_lines, actual_lines.join("\n").sub(/\n*\z/, "\n"))
     end
   end
 end
