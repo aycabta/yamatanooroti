@@ -22,4 +22,10 @@ class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
       prompt>
     EOC
   end
+
+  def test_result
+    write(":a\n")
+    close
+    assert_equal(['prompt> :a', '=> :a', 'prompt>', '', ''], result)
+  end
 end
