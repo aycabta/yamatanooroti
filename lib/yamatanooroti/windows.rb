@@ -212,10 +212,10 @@ module Yamatanooroti::WindowsTestCaseModule
 
   private def setup_console(height, width)
 
-    result = DL.FreeConsole
-    error_message(result, 'FreeConsole')
-    result = DL.AllocConsole
-    error_message(result, 'AllocConsole')
+    r = DL.FreeConsole
+    error_message(r, 'FreeConsole')
+    r = DL.AllocConsole
+    error_message(r, 'AllocConsole')
     @output_handle = DL.GetStdHandle(DL::STD_OUTPUT_HANDLE)
 
 =begin
@@ -228,8 +228,8 @@ module Yamatanooroti::WindowsTestCaseModule
     font.FontFamily = 0
     font.FontWeight = 0
     font.FaceName[0] = "\x00".ord
-    result = DL.SetCurrentConsoleFontEx(@output_handle, 0, font)
-    error_message(result, 'SetCurrentConsoleFontEx')
+    r = DL.SetCurrentConsoleFontEx(@output_handle, 0, font)
+    error_message(r, 'SetCurrentConsoleFontEx')
 =end
 
     rect = DL::SMALL_RECT.malloc
@@ -237,16 +237,16 @@ module Yamatanooroti::WindowsTestCaseModule
     rect.Top = 0
     rect.Right = width - 1
     rect.Bottom = height - 1
-    result = DL.SetConsoleWindowInfo(@output_handle, 1, rect)
-    error_message(result, 'SetConsoleWindowInfo')
+    r = DL.SetConsoleWindowInfo(@output_handle, 1, rect)
+    error_message(r, 'SetConsoleWindowInfo')
 
     size = DL.GetSystemMetrics(DL::SM_CYMIN) * 65536 + DL.GetSystemMetrics(DL::SM_CXMIN)
-    result = DL.SetConsoleScreenBufferSize(@output_handle, size)
-    error_message(result, 'SetConsoleScreenBufferSize')
+    r = DL.SetConsoleScreenBufferSize(@output_handle, size)
+    error_message(r, 'SetConsoleScreenBufferSize')
 
     size = height * 65536 + width
-    result = DL.SetConsoleScreenBufferSize(@output_handle, size)
-    error_message(result, 'SetConsoleScreenBufferSize')
+    r = DL.SetConsoleScreenBufferSize(@output_handle, size)
+    error_message(r, 'SetConsoleScreenBufferSize')
   end
 
   private def mb2wc(str)
@@ -289,19 +289,19 @@ module Yamatanooroti::WindowsTestCaseModule
     (@pi.to_ptr + 0)[0, DL::PROCESS_INFORMATION.size] = "\x00" * DL::PROCESS_INFORMATION.size
     @startup_info_ex = DL::STARTUPINFOW.malloc
     (@startup_info_ex.to_ptr + 0)[0, DL::STARTUPINFOW.size] = "\x00" * DL::STARTUPINFOW.size
-    result = DL.CreateProcessW(
+    r = DL.CreateProcessW(
       Fiddle::NULL, converted_command,
       Fiddle::NULL, Fiddle::NULL, 0, 0, Fiddle::NULL, Fiddle::NULL,
       @startup_info_ex, @pi
     )
-    error_message(result, 'CreateProcessW')
+    error_message(r, 'CreateProcessW')
     sleep @wait
   rescue => e
     pp e
   end
 
-  private def error_message(result, method_name)
-    return if not result.zero?
+  private def error_message(r, method_name)
+    return if not r.zero?
     err = DL.GetLastError
     string = Fiddle::Pointer.malloc(Fiddle::SIZEOF_VOIDP)
     DL.FormatMessage(
@@ -349,8 +349,8 @@ module Yamatanooroti::WindowsTestCaseModule
       r.dwControlKeyState = 0
     end
     written_size = Fiddle::Pointer.malloc(Fiddle::SIZEOF_DWORD, DL::FREE)
-    result = DL.WriteConsoleInputW(DL.GetStdHandle(DL::STD_INPUT_HANDLE), records, str.size * 2, written_size)
-    error_message(result, 'WriteConsoleInput')
+    r = DL.WriteConsoleInputW(DL.GetStdHandle(DL::STD_INPUT_HANDLE), records, str.size * 2, written_size)
+    error_message(r, 'WriteConsoleInput')
   end
 
   private def free_resources
@@ -358,27 +358,27 @@ module Yamatanooroti::WindowsTestCaseModule
     pe = DL::PROCESSENTRY32W.malloc
     (pe.to_ptr + 0)[0, DL::PROCESSENTRY32W.size] = "\x00" * DL::PROCESSENTRY32W.size
     pe.dwSize = DL::PROCESSENTRY32W.size
-    result = DL.Process32FirstW(h_snap, pe)
-    error_message(result, "Process32First")
-    result = DL.FreeConsole()
-    #error_message(result, "FreeConsole")
-    result = DL.AttachConsole(DL::ATTACH_PARENT_PROCESS)
-    error_message(result, 'AttachConsole')
+    r = DL.Process32FirstW(h_snap, pe)
+    error_message(r, "Process32First")
+    r = DL.FreeConsole()
+    #error_message(r, "FreeConsole")
+    r = DL.AttachConsole(DL::ATTACH_PARENT_PROCESS)
+    error_message(r, 'AttachConsole')
     loop do
       #log "a #{pe.th32ParentProcessID.inspect} -> #{pe.th32ProcessID.inspect} #{wc2mb(pe.szExeFile.pack('S260')).unpack('Z*').pack('Z*')}"
       if pe.th32ParentProcessID == DL.GetCurrentProcessId
         h_child_proc = DL.OpenProcess(DL::PROCESS_ALL_ACCESS, 0, pe.th32ProcessID)
         if (h_child_proc)
-          result = DL.TerminateProcess(h_child_proc, 0)
-          error_message(result, "TerminateProcess")
-          result = DL.CloseHandle(h_child_proc)
-          error_message(result, "CloseHandle")
+          r = DL.TerminateProcess(h_child_proc, 0)
+          error_message(r, "TerminateProcess")
+          r = DL.CloseHandle(h_child_proc)
+          error_message(r, "CloseHandle")
         end
       end
       break if DL.Process32NextW(h_snap, pe).zero?
     end
-    result = DL.TerminateThread(@pi.hThread, 0)
-    error_message(result, "TerminateThread")
+    r = DL.TerminateThread(@pi.hThread, 0)
+    error_message(r, "TerminateThread")
   end
 
   def close
@@ -390,8 +390,8 @@ module Yamatanooroti::WindowsTestCaseModule
     region.Top = 0
     region.Right = @width
     region.Bottom = @height
-    result = DL.ReadConsoleOutputW(@output_handle, char_info_matrix, @height * 65536 + @width, 0, region)
-    error_message(result, "ReadConsoleOutputW")
+    r = DL.ReadConsoleOutputW(@output_handle, char_info_matrix, @height * 65536 + @width, 0, region)
+    error_message(r, "ReadConsoleOutputW")
     @result = []
     prev_c = nil
     @height.times do |y|
@@ -413,6 +413,10 @@ module Yamatanooroti::WindowsTestCaseModule
     free_resources
   end
 
+  def result
+    @result
+  end
+
   def assert_screen(expected_lines)
     case expected_lines
     when Array
@@ -426,6 +430,7 @@ module Yamatanooroti::WindowsTestCaseModule
     @height = height
     @width = width
     @wait = wait
+    @result = nil
     setup_console(height, width)
     launch(command.join(' '))
   end

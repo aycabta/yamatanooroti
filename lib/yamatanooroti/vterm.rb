@@ -5,6 +5,7 @@ require 'pty'
 module Yamatanooroti::VTermTestCaseModule
   def start_terminal(height, width, command, wait: 0.1)
     @wait = wait
+    @result = nil
 
     @pty_output, @pty_input, @pid = PTY.spawn(*command)
 
@@ -46,17 +47,23 @@ module Yamatanooroti::VTermTestCaseModule
     end
   end
 
-  def assert_screen(expected_lines)
-    actual_lines = []
+  def result
+    return @result if @result
+    @result = []
     rows, cols = @vterm.size
     rows.times do |r|
-      actual_lines << ''
+      @result << ''
       cols.times do |c|
         cell = @screen.cell_at(r, c)
-        actual_lines.last << cell.char if cell.char
+        @result.last << cell.char if cell.char
       end
-      actual_lines.last.gsub!(/ *$/, '')
+      @result.last.gsub!(/ *$/, '')
     end
+    @result
+  end
+
+  def assert_screen(expected_lines)
+    actual_lines = result
     case expected_lines
     when Array
       assert_equal(expected_lines, actual_lines)
