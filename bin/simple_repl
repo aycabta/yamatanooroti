@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+require 'readline'
+
+loop {
+  result = Readline.readline('prompt> ')
+  puts "=> #{result}"
+}
