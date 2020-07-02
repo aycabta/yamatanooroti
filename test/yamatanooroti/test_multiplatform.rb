@@ -2,13 +2,7 @@ require 'yamatanooroti'
 
 class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
   def setup
-    repl_code = <<~'CODE'
-      loop {
-        result = Readline.readline('prompt> ')
-        puts "=> #{result}"
-      }
-    CODE
-    start_terminal(5, 30, ['ruby', '-rreadline', '-e', repl_code])
+    start_terminal(5, 30, ['ruby', 'bin/simple_repl'])
     sleep 0.5
   end
 
