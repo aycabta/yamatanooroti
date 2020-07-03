@@ -360,10 +360,6 @@ module Yamatanooroti::WindowsTestCaseModule
     pe.dwSize = DL::PROCESSENTRY32W.size
     r = DL.Process32FirstW(h_snap, pe)
     error_message(r, "Process32First")
-    r = DL.FreeConsole()
-    #error_message(r, "FreeConsole")
-    r = DL.AttachConsole(DL::ATTACH_PARENT_PROCESS)
-    error_message(r, 'AttachConsole')
     loop do
       #log "a #{pe.th32ParentProcessID.inspect} -> #{pe.th32ProcessID.inspect} #{wc2mb(pe.szExeFile.pack('S260')).unpack('Z*').pack('Z*')}"
       if pe.th32ParentProcessID == DL.GetCurrentProcessId
@@ -379,6 +375,11 @@ module Yamatanooroti::WindowsTestCaseModule
     end
     r = DL.TerminateThread(@pi.hThread, 0)
     error_message(r, "TerminateThread")
+    sleep @wait
+    r = DL.FreeConsole()
+    #error_message(r, "FreeConsole")
+    r = DL.AttachConsole(DL::ATTACH_PARENT_PROCESS)
+    error_message(r, 'AttachConsole')
   end
 
   def close
