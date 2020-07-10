@@ -360,26 +360,36 @@ module Yamatanooroti::WindowsTestCaseModule
     pe.dwSize = DL::PROCESSENTRY32W.size
     r = DL.Process32FirstW(h_snap, pe)
     error_message(r, "Process32First")
+    process_table = {}
     loop do
       #log "a #{pe.th32ParentProcessID.inspect} -> #{pe.th32ProcessID.inspect} #{wc2mb(pe.szExeFile.pack('S260')).unpack('Z*').pack('Z*')}"
-      if pe.th32ParentProcessID == DL.GetCurrentProcessId
-        h_child_proc = DL.OpenProcess(DL::PROCESS_ALL_ACCESS, 0, pe.th32ProcessID)
-        if (h_child_proc)
-          r = DL.TerminateProcess(h_child_proc, 0)
-          error_message(r, "TerminateProcess")
-          r = DL.CloseHandle(h_child_proc)
-          error_message(r, "CloseHandle")
-        end
-      end
+      process_table[pe.th32ParentProcessID] ||= []
+      process_table[pe.th32ParentProcessID] << pe.th32ProcessID
       break if DL.Process32NextW(h_snap, pe).zero?
     end
-    r = DL.TerminateThread(@pi.hThread, 0)
-    error_message(r, "TerminateThread")
-    sleep @wait
+    process_table[DL.GetCurrentProcessId].each do |child_pid|
+      kill_process_tree(process_table, child_pid)
+    end
+    #r = DL.TerminateThread(@pi.hThread, 0)
+    #error_message(r, "TerminateThread")
+    #sleep @wait
     r = DL.FreeConsole()
     #error_message(r, "FreeConsole")
     r = DL.AttachConsole(DL::ATTACH_PARENT_PROCESS)
     error_message(r, 'AttachConsole')
+  end
+
+  private def kill_process_tree(process_table, pid)
+    process_table[pid]&.each do |child_pid|
+      kill_process_tree(process_table, child_pid)
+    end
+    h_proc = DL.OpenProcess(DL::PROCESS_ALL_ACCESS, 0, pid)
+    if (h_proc)
+      r = DL.TerminateProcess(h_proc, 0)
+      error_message(r, "TerminateProcess")
+      r = DL.CloseHandle(h_proc)
+      error_message(r, "CloseHandle")
+    end
   end
 
   def close
