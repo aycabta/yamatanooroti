@@ -11,7 +11,6 @@ module Yamatanooroti::WindowsDefinition
 
   typealias 'SHORT', 'short'
   typealias 'HPCON', 'HANDLE'
-  typealias 'HPCON', 'HANDLE'
   typealias 'HRESULT', 'HANDLE'
   typealias 'LPVOID', 'void*'
   typealias 'SIZE_T', 'size_t'
