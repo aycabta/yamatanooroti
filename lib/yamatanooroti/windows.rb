@@ -11,6 +11,7 @@ module Yamatanooroti::WindowsDefinition
 
   typealias 'SHORT', 'short'
   typealias 'HPCON', 'HANDLE'
+  typealias 'HWND', 'HANDLE'
   typealias 'HRESULT', 'HANDLE'
   typealias 'LPVOID', 'void*'
   typealias 'SIZE_T', 'size_t'
@@ -145,6 +146,7 @@ module Yamatanooroti::WindowsDefinition
   C3_IDEOGRAPH = 0x0100
   TH32CS_SNAPPROCESS = 0x00000002
   PROCESS_ALL_ACCESS = 0x001FFFFF
+  SW_HIDE = 0
 
   # HANDLE GetStdHandle(DWORD nStdHandle);
   extern 'HANDLE GetStdHandle(DWORD);', :stdcall
@@ -157,6 +159,10 @@ module Yamatanooroti::WindowsDefinition
   extern 'BOOL AllocConsole(void);', :stdcall
   # BOOL AttachConsole(DWORD dwProcessId);
   extern 'BOOL AttachConsole(DWORD);', :stdcall
+  # BOOL ShowWindow(HWND hWnd, int nCmdShow);
+  extern 'BOOL ShowWindow(HWND hWnd,int nCmdShow);', :stdcall
+  # HWND WINAPI GetConsoleWindow(void);
+  extern 'HWND GetConsoleWindow(void);', :stdcall
   # BOOL WINAPI SetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize);
   extern 'BOOL SetConsoleScreenBufferSize(HANDLE, COORD);', :stdcall
   # BOOL WINAPI SetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
@@ -246,6 +252,8 @@ module Yamatanooroti::WindowsTestCaseModule
     size = height * 65536 + width
     r = DL.SetConsoleScreenBufferSize(@output_handle, size)
     error_message(r, 'SetConsoleScreenBufferSize')
+    r = DL.ShowWindow(DL.GetConsoleWindow(), DL::SW_HIDE)
+    error_message(r, 'ShowWindow')
   end
 
   private def mb2wc(str)
