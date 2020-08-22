@@ -7,6 +7,7 @@ module Yamatanooroti::VTermTestCaseModule
     @wait = wait
     @result = nil
 
+    # HACK A process what is spawned in pty stdlib can't get winsize.
     @pty_output, @pty_input, @pid = PTY.spawn(*command)
 
     @vterm = VTerm.new(height, width)
