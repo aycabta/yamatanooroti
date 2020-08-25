@@ -78,9 +78,8 @@ class Yamatanooroti::TestCase < Test::Unit::TestCase
       def klass.method_added(name)
         super
         if ancestors[1] == Yamatanooroti::TestCase
-          @@runners.each do |test_klass|
-            test_klass.define_method(name, instance_method(name))
-          end
+          test_klass = @@runners.find { |test_klass| test_klass.ancestors.include?(self) }
+          test_klass.define_method(name, instance_method(name))
           remove_method name
         end
       end
