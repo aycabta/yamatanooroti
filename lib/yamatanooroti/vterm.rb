@@ -1,14 +1,14 @@
 require 'test-unit'
 require 'vterm'
 require 'pty'
+require 'io/console'
 
 module Yamatanooroti::VTermTestCaseModule
   def start_terminal(height, width, command, wait: 0.1)
     @wait = wait
     @result = nil
 
-    # HACK A process what is spawned in pty stdlib can't get winsize.
-    @pty_output, @pty_input, @pid = PTY.spawn(*command)
+    @pty_output, @pty_input, @pid = PTY.spawn('bash', '-c', %[stty rows #{height.to_s} cols #{width.to_s}; "$@"], '--', *command)
 
     @vterm = VTerm.new(height, width)
     @vterm.set_utf8(true)
