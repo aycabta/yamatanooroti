@@ -22,4 +22,16 @@ class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
     close
     assert_equal(['prompt> :a', '=> :a', 'prompt>', '', ''], result)
   end
+
+  def test_auto_wrap
+    write("12345678901234567890123\n")
+    close
+    assert_screen(['prompt> 1234567890123456789012', '3', '=> 12345678901234567890123', 'prompt>', ''])
+    assert_screen(<<~EOC)
+      prompt> 1234567890123456789012
+      3
+      => 12345678901234567890123
+      prompt>
+    EOC
+  end
 end
