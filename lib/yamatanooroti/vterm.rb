@@ -39,6 +39,7 @@ module Yamatanooroti::VTermTestCaseModule
     @pty_input.close
     sync
     Process.kill('KILL', @pid)
+    Process.waitpid(@pid)
   end
 
   private def sync
