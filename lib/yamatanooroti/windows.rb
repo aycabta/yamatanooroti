@@ -289,8 +289,37 @@ module Yamatanooroti::WindowsTestCaseModule
     end
   end
 
+  private def quote_command_arg(arg)
+    if not arg.match?(/[ \t"]/)
+      # No quotation needed.
+      return arg
+    end
+
+    if not arg.match?(/["\\]/)
+      # No embedded double quotes or backlashes, so I can just wrap quote
+      # marks around the whole thing.
+      return %{"#{arg}"}
+    end
+
+    quote_hit = true
+    result = '"'
+    arg.chars.reverse.each do |c|
+      result << c
+      if quote_hit and c == '\\'
+        result << '\\'
+      elsif c == '"'
+        quote_hit = true
+        result << '\\'
+      else
+        quote_hit = false
+      end
+    end
+    result << '"'
+    result.reverse
+  end
+
   private def launch(command)
-    command = %Q{cmd.exe /q /c "#{command.gsub('"', '\\"')}"}
+    command = %Q{cmd.exe /q /c "#{command}"}
     converted_command = mb2wc(command)
     @pi = DL::PROCESS_INFORMATION.malloc
     (@pi.to_ptr + 0)[0, DL::PROCESS_INFORMATION.size] = "\x00" * DL::PROCESS_INFORMATION.size
@@ -402,6 +431,12 @@ module Yamatanooroti::WindowsTestCaseModule
   def close
     sleep @wait
     # read first before kill the console process including output
+    @result = retrieve_screen
+
+    free_resources
+  end
+
+  private def retrieve_screen
     char_info_matrix = Fiddle::Pointer.to_ptr("\x00" * (DL::CHAR_INFO.size * (@height * @width)))
     region = DL::SMALL_RECT.malloc
     region.Left = 0
@@ -410,7 +445,7 @@ module Yamatanooroti::WindowsTestCaseModule
     region.Bottom = @height
     r = DL.ReadConsoleOutputW(@output_handle, char_info_matrix, @height * 65536 + @width, 0, region)
     error_message(r, "ReadConsoleOutputW")
-    @result = []
+    screen = []
     prev_c = nil
     @height.times do |y|
       line = ''
@@ -425,10 +460,9 @@ module Yamatanooroti::WindowsTestCaseModule
           prev_c = mb
         end
       end
-      @result << line.gsub(/ *$/, '')
+      screen << line.gsub(/ *$/, '')
     end
-
-    free_resources
+    screen
   end
 
   def result
@@ -450,7 +484,20 @@ module Yamatanooroti::WindowsTestCaseModule
     @wait = wait
     @result = nil
     setup_console(height, width)
-    launch(command.join(' '))
+    launch(command.map{ |c| quote_command_arg(c) }.join(' '))
+    case startup_message
+    when String
+      check_startup_message = ->(message) { message.start_with?(startup_message) }
+    when Regexp
+      check_startup_message = ->(message) { startup_message.match?(message) }
+    end
+    if check_startup_message
+      loop do
+        screen = retrieve_screen.join("\n").sub(/\n*\z/, "\n")
+        break if check_startup_message.(screen)
+        sleep @wait
+      end
+    end
   end
 end
 

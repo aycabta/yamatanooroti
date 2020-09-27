@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
-require 'readline'
 
 loop {
-  result = Readline.readline('prompt> ')
+  print 'prompt> '
+  result = gets
   puts "=> #{eval(result).inspect}"
 }

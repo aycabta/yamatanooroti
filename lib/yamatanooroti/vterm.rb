@@ -4,7 +4,7 @@ require 'pty'
 require 'io/console'
 
 module Yamatanooroti::VTermTestCaseModule
-  def start_terminal(height, width, command, wait: 0.1)
+  def start_terminal(height, width, command, wait: 0.1, startup_message: nil)
     @wait = wait
     @result = nil
 
@@ -15,6 +15,15 @@ module Yamatanooroti::VTermTestCaseModule
 
     @screen = @vterm.screen
     @screen.reset(true)
+
+    case startup_message
+    when String
+      @startup_message = ->(message) { message.start_with?(startup_message) }
+    when Regexp
+      @startup_message = ->(message) { startup_message.match?(message) }
+    else
+      @startup_message = nil
+    end
 
     sync
   end
@@ -33,17 +42,30 @@ module Yamatanooroti::VTermTestCaseModule
   end
 
   private def sync
+    startup_message = '' if @startup_message
     loop do
       sleep @wait
       chunk = @pty_output.read_nonblock(1024)
+      if @startup_message
+        startup_message << chunk
+        if @startup_message.(startup_message)
+          @startup_message = nil
+          chunk = startup_message
+        else
+          redo
+        end
+      end
       @vterm.write(chunk)
       chunk = @vterm.read
       @pty_input.write(chunk)
     rescue Errno::EAGAIN, Errno::EWOULDBLOCK
+      retry if @startup_message
       break
     rescue Errno::EIO # EOF
+      retry if @startup_message
       break
     rescue IO::EAGAINWaitReadable # emtpy buffer
+      retry if @startup_message
       break
     end
   end
