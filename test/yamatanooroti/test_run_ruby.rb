@@ -11,7 +11,7 @@ class Yamatanooroti::TestRunRuby < Yamatanooroti::TestCase
   end
 
   def test_wait_for_startup_message
-    code = 'sleep 1; puts "aaa"; sleep 1; puts "bbb"'
+    code = 'sleep 1; puts "aaa"; sleep 10; puts "bbb"'
     start_terminal(5, 30, ['ruby', '-e', code], startup_message: 'aaa')
     # The start_terminal method waits 1 sec for "aaa" as specified by
     # wait_for_startup_message option and close immediately by the close
