@@ -75,9 +75,23 @@ Likewise, you can specify Windows command prompt test by `Yamatanooroti::Windows
 
 ## Method Reference
 
-### `start_terminal(height, width, command)`
+### `start_terminal(height, width, command, startup_message: nil)`
 
 Starts terminal internally that is sized `height` and `width` with `command` to test the result. The `command` should be an array of strings with a path of command and zero or more options. This should be called in `setup` method.
+
+If `startup_message` is given, `start_terminal` waits for the string to be printed and then returns.
+
+```ruby
+code = 'sleep 1; puts "aaa"; sleep 10; puts "bbb"'
+start_terminal(5, 30, ['ruby', '-e', code], startup_message: 'aaa')
+close
+assert_screen(<<~EOC)
+  aaa
+EOC
+# The start_terminal method waits for the output of the "aaa" as specified by
+# the startup_message option, the "bbb" after 10 seconds won't come because
+# the I/O is closed immediately after it.
+```
 
 ### `write(str)`
 
