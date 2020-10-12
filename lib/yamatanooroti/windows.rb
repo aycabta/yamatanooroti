@@ -478,7 +478,7 @@ module Yamatanooroti::WindowsTestCaseModule
     end
   end
 
-  def start_terminal(height, width, command, wait: 1)
+  def start_terminal(height, width, command, wait: 1, startup_message: nil)
     @height = height
     @width = width
     @wait = wait
