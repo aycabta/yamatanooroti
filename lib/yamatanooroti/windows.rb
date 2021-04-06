@@ -367,26 +367,24 @@ module Yamatanooroti::WindowsTestCaseModule
     str.chars.each_with_index do |c, i|
       record_index = i * 2
       r = DL::INPUT_RECORD_WITH_KEY_EVENT.new(records + DL::INPUT_RECORD_WITH_KEY_EVENT.size * record_index)
-      r.EventType = DL::KEY_EVENT
-      r.bKeyDown = 1
-      r.wRepeatCount = 0
-      r.wVirtualKeyCode = 0
-      r.wVirtualScanCode = 0
-      r.UnicodeChar = c.unpack('U').first
-      r.dwControlKeyState = 0
+      set_input_record(r, c, true)
       record_index = i * 2 + 1
       r = DL::INPUT_RECORD_WITH_KEY_EVENT.new(records + DL::INPUT_RECORD_WITH_KEY_EVENT.size * record_index)
-      r.EventType = DL::KEY_EVENT
-      r.bKeyDown = 0
-      r.wRepeatCount = 0
-      r.wVirtualKeyCode = 0
-      r.wVirtualScanCode = 0
-      r.UnicodeChar = c.unpack('U').first
-      r.dwControlKeyState = 0
+      set_input_record(r, c, false)
     end
     written_size = Fiddle::Pointer.malloc(Fiddle::SIZEOF_DWORD, DL::FREE)
     r = DL.WriteConsoleInputW(DL.GetStdHandle(DL::STD_INPUT_HANDLE), records, str.size * 2, written_size)
     error_message(r, 'WriteConsoleInput')
+  end
+
+  private def set_input_record(r, c, key_down)
+    r.EventType = DL::KEY_EVENT
+    r.bKeyDown = key_down ? 1 : 0
+    r.wRepeatCount = 1
+    r.wVirtualKeyCode = 0
+    r.wVirtualScanCode = 0
+    r.UnicodeChar = c.unpack('U').first
+    r.dwControlKeyState = 0
   end
 
   private def free_resources
