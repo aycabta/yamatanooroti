@@ -169,6 +169,10 @@ module Yamatanooroti::WindowsDefinition
   extern 'BOOL SetConsoleWindowInfo(HANDLE, BOOL, PSMALL_RECT);', :stdcall
   # BOOL WriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten);
   extern 'BOOL WriteConsoleInputW(HANDLE, const INPUT_RECORD*, DWORD, LPDWORD);', :stdcall
+  # SHORT VkKeyScanW(WCHAR ch);
+  extern 'SHORT VkKeyScanW(WCHAR);', :stdcall
+  # UINT MapVirtualKeyW(UINT uCode, UINT uMapType);
+  extern 'UINT MapVirtualKeyW(UINT, UINT);', :stdcall
   # BOOL ReadConsoleOutputW(HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion);
   extern 'BOOL ReadConsoleOutputW(HANDLE, PCHAR_INFO, COORD, COORD, PSMALL_RECT);', :stdcall
   # BOOL WINAPI SetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
@@ -381,8 +385,8 @@ module Yamatanooroti::WindowsTestCaseModule
     r.EventType = DL::KEY_EVENT
     r.bKeyDown = key_down ? 1 : 0
     r.wRepeatCount = 1
-    r.wVirtualKeyCode = 0
-    r.wVirtualScanCode = 0
+    r.wVirtualKeyCode = DL.VkKeyScanW(code)
+    r.wVirtualScanCode = DL.MapVirtualKeyW(code, 0)
     r.UnicodeChar = c.unpack('U').first
     r.dwControlKeyState = 0
   end
