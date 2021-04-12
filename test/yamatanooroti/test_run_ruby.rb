@@ -1,4 +1,5 @@
 require 'yamatanooroti'
+require 'tmpdir'
 
 class Yamatanooroti::TestRunRuby < Yamatanooroti::TestCase
   def test_winsize

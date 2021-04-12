@@ -147,6 +147,7 @@ module Yamatanooroti::WindowsDefinition
   TH32CS_SNAPPROCESS = 0x00000002
   PROCESS_ALL_ACCESS = 0x001FFFFF
   SW_HIDE = 0
+  LEFT_ALT_PRESSED = 0x0002
 
   # HANDLE GetStdHandle(DWORD nStdHandle);
   extern 'HANDLE GetStdHandle(DWORD);', :stdcall
@@ -366,29 +367,41 @@ module Yamatanooroti::WindowsTestCaseModule
 
   def write(str)
     sleep @wait
-    str.tr!("\n", "\r")
+    str.force_encoding(Encoding::ASCII_8BIT).tr!("\n", "\r")
     records = Fiddle::Pointer.malloc(DL::INPUT_RECORD_WITH_KEY_EVENT.size * str.size * 2, DL::FREE)
     str.chars.each_with_index do |c, i|
+      byte = c.ord
+      if c.bytesize == 1 and byte.allbits?(0x80) # with Meta key
+        c = (byte ^ 0x80).chr
+        control_key_state = DL::LEFT_ALT_PRESSED
+      else
+        control_key_state = 0
+      end
       record_index = i * 2
       r = DL::INPUT_RECORD_WITH_KEY_EVENT.new(records + DL::INPUT_RECORD_WITH_KEY_EVENT.size * record_index)
-      set_input_record(r, c, true)
+      set_input_record(r, c, true, control_key_state)
       record_index = i * 2 + 1
       r = DL::INPUT_RECORD_WITH_KEY_EVENT.new(records + DL::INPUT_RECORD_WITH_KEY_EVENT.size * record_index)
-      set_input_record(r, c, false)
+      set_input_record(r, c, false, control_key_state)
     end
     written_size = Fiddle::Pointer.malloc(Fiddle::SIZEOF_DWORD, DL::FREE)
     r = DL.WriteConsoleInputW(DL.GetStdHandle(DL::STD_INPUT_HANDLE), records, str.size * 2, written_size)
     error_message(r, 'WriteConsoleInput')
   end
 
-  private def set_input_record(r, c, key_down)
+  private def set_input_record(r, c, key_down, control_key_state)
+    begin
+      code = c.unpack('U').first
+    rescue ArgumentError
+      code = c.bytes.first
+    end
     r.EventType = DL::KEY_EVENT
     r.bKeyDown = key_down ? 1 : 0
     r.wRepeatCount = 1
     r.wVirtualKeyCode = DL.VkKeyScanW(code)
     r.wVirtualScanCode = DL.MapVirtualKeyW(code, 0)
-    r.UnicodeChar = c.unpack('U').first
-    r.dwControlKeyState = 0
+    r.UnicodeChar = code
+    r.dwControlKeyState = control_key_state
   end
 
   private def free_resources
