@@ -30,7 +30,18 @@ module Yamatanooroti::VTermTestCaseModule
 
   def write(str)
     sync
-    @pty_input.write(str)
+    str_to_write = String.new(encoding: Encoding::ASCII_8BIT)
+    str.chars.each do |c|
+      byte = c.force_encoding(Encoding::ASCII_8BIT).ord
+      if c.bytesize == 1 and byte.allbits?(0x80) # with Meta key
+        c = (byte ^ 0x80).chr
+        str_to_write << "\e"
+        str_to_write << c
+      else
+        str_to_write << c
+      end
+    end
+    @pty_input.write(str_to_write)
     sync
   end
 
