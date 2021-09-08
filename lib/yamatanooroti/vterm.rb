@@ -90,7 +90,13 @@ module Yamatanooroti::VTermTestCaseModule
       @result << ''
       cols.times do |c|
         cell = @screen.cell_at(r, c)
-        @result.last << cell.char if cell.char
+        if cell.char.nil? or cell.char.empty?
+          # There will be no char to the left of the rendered area if moves
+          # the cursor.
+          @result.last << ' '
+        else
+          @result.last << cell.char
+        end
       end
       @result.last.gsub!(/ *$/, '')
     end
