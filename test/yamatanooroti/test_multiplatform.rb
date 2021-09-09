@@ -34,4 +34,16 @@ class Yamatanooroti::TestMultiplatform < Yamatanooroti::TestCase
       prompt>
     EOC
   end
+
+  def test_fullwidth
+    write(":あ\n")
+    close
+    assert_equal(['prompt> :あ', '=> :あ', 'prompt>', '', ''], result)
+  end
+
+  def test_two_fullwidth
+    write(":あい\n")
+    close
+    assert_equal(['prompt> :あい', '=> :あい', 'prompt>', '', ''], result)
+  end
 end
