@@ -1,4 +1,4 @@
-require 'test-unit'
+require 'test/unit'
 
 class Yamatanooroti
   def self.load_vterm

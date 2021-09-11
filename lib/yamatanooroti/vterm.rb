@@ -1,4 +1,4 @@
-require 'test-unit'
+require 'test/unit'
 require 'vterm'
 require 'pty'
 require 'io/console'
