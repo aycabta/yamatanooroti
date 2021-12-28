@@ -367,10 +367,10 @@ module Yamatanooroti::WindowsTestCaseModule
 
   def write(str)
     sleep @wait
-    str.force_encoding(Encoding::ASCII_8BIT).tr!("\n", "\r")
     records = Fiddle::Pointer.malloc(DL::INPUT_RECORD_WITH_KEY_EVENT.size * str.size * 2, DL::FREE)
     str.chars.each_with_index do |c, i|
-      byte = c.ord
+      c = "\r" if c == "\n"
+      byte = c.getbyte(0)
       if c.bytesize == 1 and byte.allbits?(0x80) # with Meta key
         c = (byte ^ 0x80).chr
         control_key_state = DL::LEFT_ALT_PRESSED
