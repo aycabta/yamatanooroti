@@ -264,14 +264,14 @@ module Yamatanooroti::WindowsTestCaseModule
   private def mb2wc(str)
     size = DL.MultiByteToWideChar(65001, 0, str, str.bytesize, '', 0)
     converted_str = String.new("\x00" * (size * 2), encoding: 'ASCII-8BIT')
-    DL.MultiByteToWideChar(65001, 0, str, str.bytesize, converted_str, converted_str.bytesize)
+    DL.MultiByteToWideChar(65001, 0, str, str.bytesize, converted_str, size)
     converted_str
   end
 
   private def wc2mb(str)
-    size = DL.WideCharToMultiByte(65001, 0, str, str.bytesize, '', 0, 0, 0)
-    converted_str = "\x00" * (size * 2)
-    DL.WideCharToMultiByte(65001, 0, str, str.bytesize, converted_str, converted_str.bytesize, 0, 0)
+    size = DL.WideCharToMultiByte(65001, 0, str, str.bytesize / 2, '', 0, 0, 0)
+    converted_str = "\x00" * size
+    DL.WideCharToMultiByte(65001, 0, str, str.bytesize / 2, converted_str, converted_str.bytesize, 0, 0)
     converted_str
   end
 
