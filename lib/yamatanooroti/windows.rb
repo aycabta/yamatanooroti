@@ -54,6 +54,15 @@ module Yamatanooroti::WindowsDefinition
   typealias 'SMALL_RECT*', 'DWORD64*'
   typealias 'PSMALL_RECT', 'SMALL_RECT*'
 
+  CONSOLE_SCREEN_BUFFER_INFO = struct [
+    'COORD dwSize',
+    'COORD dwCursorPosition',
+    'WORD wAttributes',
+    'SHORT Left', 'SHORT Top', 'SHORT Right', 'SHORT Bottom', # 'SMALL_RECT srWindow',
+    'SHORT MaxWidth', 'SHORT MaxHeight' # 'COORD dwMaximumWindowSize'
+  ]
+  typealias 'PCONSOLE_SCREEN_BUFFER_INFO', 'CONSOLE_SCREEN_BUFFER_INFO*'
+
   SECURITY_ATTRIBUTES = struct [
     'DWORD nLength',
     'LPVOID lpSecurityDescriptor',
@@ -176,6 +185,10 @@ module Yamatanooroti::WindowsDefinition
   extern 'UINT MapVirtualKeyW(UINT, UINT);', :stdcall
   # BOOL ReadConsoleOutputW(HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion);
   extern 'BOOL ReadConsoleOutputW(HANDLE, PCHAR_INFO, COORD, COORD, PSMALL_RECT);', :stdcall
+  # BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
+  extern 'BOOL GetConsoleScreenBufferInfo(HANDLE, PCONSOLE_SCREEN_BUFFER_INFO);', :stdcall
+  # BOOL WINAPI GetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+  extern 'BOOL GetCurrentConsoleFontEx(HANDLE, BOOL, PCONSOLE_FONT_INFOEX);', :stdcall
   # BOOL WINAPI SetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
   extern 'BOOL SetCurrentConsoleFontEx(HANDLE, BOOL, PCONSOLE_FONT_INFOEX);', :stdcall
 
@@ -228,19 +241,32 @@ module Yamatanooroti::WindowsTestCaseModule
     error_message(r, 'AllocConsole')
     @output_handle = DL.GetStdHandle(DL::STD_OUTPUT_HANDLE)
 
-=begin
     font = DL::CONSOLE_FONT_INFOEX.malloc
-    (font.to_ptr + 0)[0, DL::CONSOLE_FONT_INFOEX.size] = "\x00" * DL::CONSOLE_FONT_INFOEX.size
     font.cbSize = DL::CONSOLE_FONT_INFOEX.size
-    font.nFont = 0
-    font_size = 72
-    font.dwFontSize = font_size * 65536 + font_size
-    font.FontFamily = 0
-    font.FontWeight = 0
-    font.FaceName[0] = "\x00".ord
+
+    r = DL.GetCurrentConsoleFontEx(@output_handle, 0, font)
+    error_message(r, 'GetCurrentConsoleFontEx')
+    fontsize = (font.dwFontSize & 0xffff0000) / 65536
+    fontwidth = font.dwFontSize & 0xffff
+    newsize = fontsize
+    newwidth = fontwidth
+
+    csbi = DL::CONSOLE_SCREEN_BUFFER_INFO.malloc
+    r = DL.GetConsoleScreenBufferInfo(@output_handle, csbi)
+    error_message(r, 'GetConsoleScreenBufferInfo')
+
+    if (width < (csbi.Right - csbi.Left + 1) / 4)
+      newsize = fontsize * (csbi.Right - csbi.Left + 1) / width
+      newwidth = fontwidth * (csbi.Right - csbi.Left + 1) / width
+    end
+    if newsize * height > fontsize * csbi.MaxHeight
+      newsize = fontsize * csbi.MaxHeight / height
+      newwidth = fontwidth * newsize / fontsize
+    end
+
+    font.dwFontSize = newsize * 65536 + newwidth
     r = DL.SetCurrentConsoleFontEx(@output_handle, 0, font)
     error_message(r, 'SetCurrentConsoleFontEx')
-=end
 
     rect = DL::SMALL_RECT.malloc
     rect.Left = 0
@@ -250,13 +276,22 @@ module Yamatanooroti::WindowsTestCaseModule
     r = DL.SetConsoleWindowInfo(@output_handle, 1, rect)
     error_message(r, 'SetConsoleWindowInfo')
 
-    size = DL.GetSystemMetrics(DL::SM_CYMIN) * 65536 + DL.GetSystemMetrics(DL::SM_CXMIN)
-    r = DL.SetConsoleScreenBufferSize(@output_handle, size)
-    error_message(r, 'SetConsoleScreenBufferSize')
+#    size = DL.GetSystemMetrics(DL::SM_CYMIN) * 65536 + DL.GetSystemMetrics(DL::SM_CXMIN)
+#    r = DL.SetConsoleScreenBufferSize(@output_handle, size)
+#    error_message(r, 'SetConsoleScreenBufferSize')
+
+    csbi = DL::CONSOLE_SCREEN_BUFFER_INFO.malloc
+    r = DL.GetConsoleScreenBufferInfo(@output_handle, csbi)
+    error_message(r, 'GetConsoleScreenBufferInfo')
 
     size = height * 65536 + width
     r = DL.SetConsoleScreenBufferSize(@output_handle, size)
-    error_message(r, 'SetConsoleScreenBufferSize')
+    error_message(r, "SetConsoleScreenBufferSize " \
+      "(#{width} #{height}) " \
+      "(#{csbi.Right - csbi.Left + 1} #{csbi.Bottom - csbi.Top + 1}) " \
+      "(#{csbi.dwSize & 65535} #{csbi.dwSize / 65536}) " \
+      "(#{csbi.Left} #{csbi.Top}) " \
+      "(#{csbi.Right} #{csbi.Bottom})")
     r = DL.ShowWindow(DL.GetConsoleWindow(), DL::SW_HIDE)
     error_message(r, 'ShowWindow')
   end
