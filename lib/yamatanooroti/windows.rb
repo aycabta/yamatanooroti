@@ -24,7 +24,7 @@ module Yamatanooroti::WindowsDefinition
   typealias 'LPCVOID', 'void*'
   typealias 'LPDWORD', 'void*'
   typealias 'LPOVERLAPPED', 'void*'
-  typealias 'WCHAR', 'SHORT'
+  typealias 'WCHAR', 'unsigned short'
   typealias 'LPCWCH', 'void*'
   typealias 'LPSTR', 'void*'
   typealias 'LPCCH', 'void*'
