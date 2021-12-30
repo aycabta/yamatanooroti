@@ -537,7 +537,11 @@ module Yamatanooroti::WindowsTestCaseModule
     launch(command.map{ |c| quote_command_arg(c) }.join(' '))
     case startup_message
     when String
-      check_startup_message = ->(message) { message.start_with?(startup_message) }
+      check_startup_message = ->(message) {
+        message.start_with?(
+          startup_message.each_char.each_slice(width).map(&:join).join("\0").gsub(/ *\0/, "\n")
+        )
+      }
     when Regexp
       check_startup_message = ->(message) { startup_message.match?(message) }
     end
