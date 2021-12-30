@@ -491,8 +491,8 @@ module Yamatanooroti::WindowsTestCaseModule
     region = DL::SMALL_RECT.malloc
     region.Left = 0
     region.Top = 0
-    region.Right = @width
-    region.Bottom = @height
+    region.Right = @width - 1
+    region.Bottom = @height - 1
     r = DL.ReadConsoleOutputW(@output_handle, char_info_matrix, @height * 65536 + @width, 0, region)
     error_message(r, "ReadConsoleOutputW")
     screen = []
