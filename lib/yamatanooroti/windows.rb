@@ -24,7 +24,7 @@ module Yamatanooroti::WindowsDefinition
   typealias 'LPCVOID', 'void*'
   typealias 'LPDWORD', 'void*'
   typealias 'LPOVERLAPPED', 'void*'
-  typealias 'WCHAR', 'SHORT'
+  typealias 'WCHAR', 'unsigned short'
   typealias 'LPCWCH', 'void*'
   typealias 'LPSTR', 'void*'
   typealias 'LPCCH', 'void*'
@@ -53,6 +53,15 @@ module Yamatanooroti::WindowsDefinition
   ]
   typealias 'SMALL_RECT*', 'DWORD64*'
   typealias 'PSMALL_RECT', 'SMALL_RECT*'
+
+  CONSOLE_SCREEN_BUFFER_INFO = struct [
+    'COORD dwSize',
+    'COORD dwCursorPosition',
+    'WORD wAttributes',
+    'SHORT Left', 'SHORT Top', 'SHORT Right', 'SHORT Bottom', # 'SMALL_RECT srWindow',
+    'SHORT MaxWidth', 'SHORT MaxHeight' # 'COORD dwMaximumWindowSize'
+  ]
+  typealias 'PCONSOLE_SCREEN_BUFFER_INFO', 'CONSOLE_SCREEN_BUFFER_INFO*'
 
   SECURITY_ATTRIBUTES = struct [
     'DWORD nLength',
@@ -176,6 +185,10 @@ module Yamatanooroti::WindowsDefinition
   extern 'UINT MapVirtualKeyW(UINT, UINT);', :stdcall
   # BOOL ReadConsoleOutputW(HANDLE hConsoleOutput, PCHAR_INFO lpBuffer, COORD dwBufferSize, COORD dwBufferCoord, PSMALL_RECT lpReadRegion);
   extern 'BOOL ReadConsoleOutputW(HANDLE, PCHAR_INFO, COORD, COORD, PSMALL_RECT);', :stdcall
+  # BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo);
+  extern 'BOOL GetConsoleScreenBufferInfo(HANDLE, PCONSOLE_SCREEN_BUFFER_INFO);', :stdcall
+  # BOOL WINAPI GetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+  extern 'BOOL GetCurrentConsoleFontEx(HANDLE, BOOL, PCONSOLE_FONT_INFOEX);', :stdcall
   # BOOL WINAPI SetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
   extern 'BOOL SetCurrentConsoleFontEx(HANDLE, BOOL, PCONSOLE_FONT_INFOEX);', :stdcall
 
@@ -228,19 +241,32 @@ module Yamatanooroti::WindowsTestCaseModule
     error_message(r, 'AllocConsole')
     @output_handle = DL.GetStdHandle(DL::STD_OUTPUT_HANDLE)
 
-=begin
     font = DL::CONSOLE_FONT_INFOEX.malloc
-    (font.to_ptr + 0)[0, DL::CONSOLE_FONT_INFOEX.size] = "\x00" * DL::CONSOLE_FONT_INFOEX.size
     font.cbSize = DL::CONSOLE_FONT_INFOEX.size
-    font.nFont = 0
-    font_size = 72
-    font.dwFontSize = font_size * 65536 + font_size
-    font.FontFamily = 0
-    font.FontWeight = 0
-    font.FaceName[0] = "\x00".ord
+
+    r = DL.GetCurrentConsoleFontEx(@output_handle, 0, font)
+    error_message(r, 'GetCurrentConsoleFontEx')
+    fontsize = (font.dwFontSize & 0xffff0000) / 65536
+    fontwidth = font.dwFontSize & 0xffff
+    newsize = fontsize
+    newwidth = fontwidth
+
+    csbi = DL::CONSOLE_SCREEN_BUFFER_INFO.malloc
+    r = DL.GetConsoleScreenBufferInfo(@output_handle, csbi)
+    error_message(r, 'GetConsoleScreenBufferInfo')
+
+    if (width < (csbi.Right - csbi.Left + 1) / 4)
+      newsize = fontsize * (csbi.Right - csbi.Left + 1) / width
+      newwidth = fontwidth * (csbi.Right - csbi.Left + 1) / width
+    end
+    if newsize * height > fontsize * csbi.MaxHeight
+      newsize = fontsize * csbi.MaxHeight / height
+      newwidth = fontwidth * newsize / fontsize
+    end
+
+    font.dwFontSize = newsize * 65536 + newwidth
     r = DL.SetCurrentConsoleFontEx(@output_handle, 0, font)
     error_message(r, 'SetCurrentConsoleFontEx')
-=end
 
     rect = DL::SMALL_RECT.malloc
     rect.Left = 0
@@ -250,13 +276,22 @@ module Yamatanooroti::WindowsTestCaseModule
     r = DL.SetConsoleWindowInfo(@output_handle, 1, rect)
     error_message(r, 'SetConsoleWindowInfo')
 
-    size = DL.GetSystemMetrics(DL::SM_CYMIN) * 65536 + DL.GetSystemMetrics(DL::SM_CXMIN)
-    r = DL.SetConsoleScreenBufferSize(@output_handle, size)
-    error_message(r, 'SetConsoleScreenBufferSize')
+#    size = DL.GetSystemMetrics(DL::SM_CYMIN) * 65536 + DL.GetSystemMetrics(DL::SM_CXMIN)
+#    r = DL.SetConsoleScreenBufferSize(@output_handle, size)
+#    error_message(r, 'SetConsoleScreenBufferSize')
+
+    csbi = DL::CONSOLE_SCREEN_BUFFER_INFO.malloc
+    r = DL.GetConsoleScreenBufferInfo(@output_handle, csbi)
+    error_message(r, 'GetConsoleScreenBufferInfo')
 
     size = height * 65536 + width
     r = DL.SetConsoleScreenBufferSize(@output_handle, size)
-    error_message(r, 'SetConsoleScreenBufferSize')
+    error_message(r, "SetConsoleScreenBufferSize " \
+      "(#{width} #{height}) " \
+      "(#{csbi.Right - csbi.Left + 1} #{csbi.Bottom - csbi.Top + 1}) " \
+      "(#{csbi.dwSize & 65535} #{csbi.dwSize / 65536}) " \
+      "(#{csbi.Left} #{csbi.Top}) " \
+      "(#{csbi.Right} #{csbi.Bottom})")
     r = DL.ShowWindow(DL.GetConsoleWindow(), DL::SW_HIDE)
     error_message(r, 'ShowWindow')
   end
@@ -264,14 +299,14 @@ module Yamatanooroti::WindowsTestCaseModule
   private def mb2wc(str)
     size = DL.MultiByteToWideChar(65001, 0, str, str.bytesize, '', 0)
     converted_str = String.new("\x00" * (size * 2), encoding: 'ASCII-8BIT')
-    DL.MultiByteToWideChar(65001, 0, str, str.bytesize, converted_str, converted_str.bytesize)
+    DL.MultiByteToWideChar(65001, 0, str, str.bytesize, converted_str, size)
     converted_str
   end
 
   private def wc2mb(str)
-    size = DL.WideCharToMultiByte(65001, 0, str, str.bytesize, '', 0, 0, 0)
-    converted_str = "\x00" * (size * 2)
-    DL.WideCharToMultiByte(65001, 0, str, str.bytesize, converted_str, converted_str.bytesize, 0, 0)
+    size = DL.WideCharToMultiByte(65001, 0, str, str.bytesize / 2, '', 0, 0, 0)
+    converted_str = "\x00" * size
+    DL.WideCharToMultiByte(65001, 0, str, str.bytesize / 2, converted_str, converted_str.bytesize, 0, 0)
     converted_str
   end
 
@@ -367,10 +402,10 @@ module Yamatanooroti::WindowsTestCaseModule
 
   def write(str)
     sleep @wait
-    str.force_encoding(Encoding::ASCII_8BIT).tr!("\n", "\r")
     records = Fiddle::Pointer.malloc(DL::INPUT_RECORD_WITH_KEY_EVENT.size * str.size * 2, DL::FREE)
     str.chars.each_with_index do |c, i|
-      byte = c.ord
+      c = "\r" if c == "\n"
+      byte = c.getbyte(0)
       if c.bytesize == 1 and byte.allbits?(0x80) # with Meta key
         c = (byte ^ 0x80).chr
         control_key_state = DL::LEFT_ALT_PRESSED
@@ -456,8 +491,8 @@ module Yamatanooroti::WindowsTestCaseModule
     region = DL::SMALL_RECT.malloc
     region.Left = 0
     region.Top = 0
-    region.Right = @width
-    region.Bottom = @height
+    region.Right = @width - 1
+    region.Bottom = @height - 1
     r = DL.ReadConsoleOutputW(@output_handle, char_info_matrix, @height * 65536 + @width, 0, region)
     error_message(r, "ReadConsoleOutputW")
     screen = []
@@ -502,7 +537,11 @@ module Yamatanooroti::WindowsTestCaseModule
     launch(command.map{ |c| quote_command_arg(c) }.join(' '))
     case startup_message
     when String
-      check_startup_message = ->(message) { message.start_with?(startup_message) }
+      check_startup_message = ->(message) {
+        message.start_with?(
+          startup_message.each_char.each_slice(width).map(&:join).join("\0").gsub(/ *\0/, "\n")
+        )
+      }
     when Regexp
       check_startup_message = ->(message) { startup_message.match?(message) }
     end
