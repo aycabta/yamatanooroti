@@ -288,11 +288,11 @@ module Yamatanooroti::WindowsTestCaseModule
     size = height * 65536 + width
     r = DL.SetConsoleScreenBufferSize(@output_handle, size)
     error_message(r, "SetConsoleScreenBufferSize " \
-      "(#{width} #{height}) " \
-      "(#{csbi.Right - csbi.Left + 1} #{csbi.Bottom - csbi.Top + 1}) " \
-      "(#{csbi.dwSize & 65535} #{csbi.dwSize / 65536}) " \
-      "(#{csbi.Left} #{csbi.Top}) " \
-      "(#{csbi.Right} #{csbi.Bottom})")
+      "(#{height} #{width}) " \
+      "(#{csbi.Bottom - csbi.Top + 1} #{csbi.Right - csbi.Left + 1}) " \
+      "(#{csbi.dwSize / 65536} #{csbi.dwSize & 65535}) " \
+      "(#{csbi.Top} #{csbi.Left}) " \
+      "(#{csbi.Bottom} #{csbi.Right})")
     r = DL.ShowWindow(DL.GetConsoleWindow(), DL::SW_HIDE)
     error_message(r, 'ShowWindow')
   end
