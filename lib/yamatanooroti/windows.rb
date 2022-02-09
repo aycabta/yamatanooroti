@@ -149,6 +149,7 @@ module Yamatanooroti::WindowsDefinition
   ATTACH_PARENT_PROCESS = -1
   KEY_EVENT = 0x0001
   CT_CTYPE3 = 0x04
+  C3_KATAKANA = 0x0010
   C3_HIRAGANA = 0x0020
   C3_HALFWIDTH = 0x0040
   C3_FULLWIDTH = 0x0080
@@ -287,11 +288,11 @@ module Yamatanooroti::WindowsTestCaseModule
     size = height * 65536 + width
     r = DL.SetConsoleScreenBufferSize(@output_handle, size)
     error_message(r, "SetConsoleScreenBufferSize " \
-      "(#{width} #{height}) " \
-      "(#{csbi.Right - csbi.Left + 1} #{csbi.Bottom - csbi.Top + 1}) " \
-      "(#{csbi.dwSize & 65535} #{csbi.dwSize / 65536}) " \
-      "(#{csbi.Left} #{csbi.Top}) " \
-      "(#{csbi.Right} #{csbi.Bottom})")
+      "(#{height} #{width}) " \
+      "(#{csbi.Bottom - csbi.Top + 1} #{csbi.Right - csbi.Left + 1}) " \
+      "(#{csbi.dwSize / 65536} #{csbi.dwSize & 65535}) " \
+      "(#{csbi.Top} #{csbi.Left}) " \
+      "(#{csbi.Bottom} #{csbi.Right})")
     r = DL.ShowWindow(DL.GetConsoleWindow(), DL::SW_HIDE)
     error_message(r, 'ShowWindow')
   end
@@ -314,13 +315,13 @@ module Yamatanooroti::WindowsTestCaseModule
     return false if c.nil? or c.empty?
     wc = mb2wc(c)
     type = Fiddle::Pointer.malloc(Fiddle::SIZEOF_WORD, DL::FREE)
-    DL.GetStringTypeW(DL::CT_CTYPE3, wc, wc.bytesize, type)
+    DL.GetStringTypeW(DL::CT_CTYPE3, wc, wc.bytesize / 2, type)
     char_type = type[0, Fiddle::SIZEOF_WORD].unpack('S').first
     if char_type.anybits?(DL::C3_FULLWIDTH)
       true
     elsif char_type.anybits?(DL::C3_HALFWIDTH)
       false
-    elsif char_type.anybits?(DL::C3_HIRAGANA)
+    elsif char_type.anybits?(DL::C3_HIRAGANA|DL::C3_KATAKANA)
       true
     elsif char_type.anybits?(DL::C3_IDEOGRAPH)
       true
